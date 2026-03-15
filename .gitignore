@@ -26,5 +26,5 @@ pnpm-debug.log*
 node_modules
 
 # Pycache files
-__pycache__/
+**/__pycache__/
 *.py[cod]
