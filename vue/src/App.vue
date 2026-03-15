@@ -1,17 +1,20 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <ImageUpload msg="Welcome to Your Vue.js App"/>
+  <ImageUpload @upload-success="handleResult"/>
+  <ImageResult v-if="result" :resultData="result"/>
 </template>
 
-<script>
+<script setup>
+import { ref, provide } from "vue"
 import ImageUpload from './components/ImageUpload.vue'
+import ImageResult from './components/ImageResult.vue'
 
-export default {
-  name: 'App',
-  components: {
-    ImageUpload
-  }
+const isProcessing = ref(false)
+const result = ref(null)
+const handleResult = (data) => {
+  result.value = data
 }
+
+provide('isProcessing', isProcessing)
 </script>
 
 <style>

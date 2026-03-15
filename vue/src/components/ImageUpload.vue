@@ -18,7 +18,10 @@
       <el-icon><Plus /></el-icon>
     </el-upload>
 
-    <div class="actions">
+    <div class="actions" v-if="!isProcessing">
+      <el-button type="danger" v-if="fileList.length > 0" @click="clearImages">
+        清空图片
+      </el-button>
       <el-button type="primary" @click="submitUpload">
         上传图片
       </el-button>
@@ -27,19 +30,31 @@
     <el-dialog v-model="dialogVisible">
       <img :src="dialogImageUrl" style="width:100%" />
     </el-dialog>
+
+    <div class="progress" v-if="isProcessing">
+      <el-icon class="loading-icon">
+        <Loading />
+      </el-icon>
+      <span class="progress-text">{{ progress }}</span>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue"
+import { ref, defineEmits, inject } from "vue"
 import axios from "axios"
-import { Plus } from "@element-plus/icons-vue"
+import { Plus, Loading } from "@element-plus/icons-vue"
 import { messageError, messageSuccess } from "@/utils/message"
 
 const fileList = ref([])
 const dialogVisible = ref(false)
 const dialogImageUrl = ref("")
-const API_URL = "http://localhost:8000/upload"
+const UPLOAD_URL = "http://localhost:8000/upload"
+const PROCESS_URL = "http://localhost:8000/process"
+const emit = defineEmits(["upload-success"])
+const progress = ref("")
+const ws = ref(null)
+const isProcessing = inject('isProcessing')
 
 const handleChange = (file, files) => {
   fileList.value = files
@@ -65,22 +80,55 @@ const beforeUpload = (file) => {
 
 const submitUpload = async () => {
   if (fileList.value.length === 0) return
+
   const formData = new FormData()
   fileList.value.forEach((item) => {
     formData.append("files", item.raw)
   })
 
   try {
-    const res = await axios.post(API_URL, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data"
-      }
+    isProcessing.value = true
+    progress.value = "任务启动中..."
+    const uploadRes = await axios.post(UPLOAD_URL, formData)
+    const task_id = uploadRes.data.task_id
+    connectWS(task_id)
+    await new Promise(resolve => {
+      ws.value.onopen = resolve
     })
-    console.log(res.data)
-    messageSuccess("上传成功")
+
+    const processRes = await axios.get(`${PROCESS_URL}/${task_id}`)
+    const data = processRes.data
+    const fileMap = {}
+    fileList.value.forEach(f => {
+      fileMap[f.name] = f.raw
+    })
+    emit("upload-success", {
+      ...data,
+      fileMap
+    })
+    progress.value = "处理完毕"
+    messageSuccess("处理完毕")
   } catch (err) {
     console.error(err)
     messageError("上传失败")
+  } finally {
+    isProcessing.value = false
+  }
+}
+
+const clearImages = () => {
+  fileList.value = []
+}
+
+const connectWS = (task_id) => {
+  ws.value = new WebSocket(`ws://localhost:8000/ws/${task_id}`)
+  ws.value.onmessage = (event) => {
+    const data = JSON.parse(event.data)
+    progress.value = data.message
+  }
+
+  ws.value.onclose = () => {
+    console.log("WebSocket closed")
   }
 }
 </script>
@@ -94,5 +142,33 @@ const submitUpload = async () => {
 
 .actions {
   margin-top: 20px;
+}
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 40px;
+  font-size: 18px;
+}
+
+.loading-icon {
+  margin-right: 10px;
+  font-size: 20px;
+  animation: rotating 1s linear infinite;
+}
+
+@keyframes rotating {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.progress-text {
+  color: #409EFF;
 }
 </style>

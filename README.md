@@ -1,0 +1,11 @@
+# IQA-Based Image Selection System
+
+## Deployment
+
+```git clone https://github.com/Kziz3988/iqa_image_selector```
+
+```./START_ALL.bat```
+
+## Open source projects used in the system
+
+[VCRNet](https://github.com/NUIST-Videocoding/VCRNet/)
