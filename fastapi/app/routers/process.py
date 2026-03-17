@@ -10,7 +10,7 @@ import os
 router = APIRouter()
 @router.get(f"{PROCESS_ROUTE}/{{task_id}}")
 
-async def process_images(task_id: str, iqa_model: str = "VCRNet"):
+async def process_images(task_id: str, iqa_model: str = "ARNIQA"):
     task_dir = get_task_dir(task_id)
     if not os.path.exists(task_dir):
         return {"error": "Task not found"}

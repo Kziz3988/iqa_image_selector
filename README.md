@@ -9,3 +9,5 @@
 ## Open source projects used in the system
 
 [VCRNet](https://github.com/NUIST-Videocoding/VCRNet/)
+
+[ARNIQA](https://github.com/miccunifi/ARNIQA)

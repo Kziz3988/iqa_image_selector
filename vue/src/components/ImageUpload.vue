@@ -20,10 +20,10 @@
 
     <div class="actions" v-if="!isProcessing">
       <el-button type="danger" v-if="fileList.length > 0" @click="clearImages">
-        清空图片
+        清空图像
       </el-button>
       <el-button type="primary" @click="submitUpload">
-        上传图片
+        上传图像
       </el-button>
     </div>
 
@@ -72,7 +72,7 @@ const handlePreview = (file) => {
 const beforeUpload = (file) => {
   const isImage = file.type.startsWith("image/")
   if (!isImage) {
-    messageError("只能上传图片格式文件")
+    messageError("只能上传图像格式文件")
     return false
   }
   return true
