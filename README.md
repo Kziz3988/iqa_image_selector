@@ -4,6 +4,8 @@
 
 ```git clone https://github.com/Kziz3988/iqa_image_selector```
 
+```git lfs pull```
+
 ```./START_ALL.bat```
 
 ## Open source projects used in the system

@@ -3,7 +3,7 @@ vue/node_modules/
 vue/dist/
 fastapi/.venv/
 fastapi/uploads/
-
+fastapi/app/models/weights/*.pth
 
 # local env files
 .env.local
