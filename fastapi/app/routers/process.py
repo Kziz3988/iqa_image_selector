@@ -1,9 +1,8 @@
 from fastapi import APIRouter
-import asyncio
 from app.utils.task import get_task_dir, delete_task
 from app.utils.progress import progress_manager
 from app.services.model_service import ModelService
-from app.models.clustering import CosineClusterer, HDBSCANClusterer
+from app.models.clustering import AgglomerativeClusterer, HDBSCANClusterer
 from app.config import PROCESS_ROUTE
 import os
 
@@ -28,13 +27,15 @@ async def process_images(task_id: str, iqa_model: str = "ARNIQA"):
         })
         extractor = ModelService.get_feature_extractor()
         features = [extractor.extract(f) for f in file_paths]
+        n_samples = len(features)
+        n_features = len(features[0])
 
         # Cluster features
         await progress_manager.send(task_id, {
             "stage": "cluster",
             "message": "特征聚类..."
         })
-        clusterer = CosineClusterer() if len(features) < 10 else HDBSCANClusterer()
+        clusterer = AgglomerativeClusterer() if n_samples < 10 else HDBSCANClusterer()
         labels = clusterer.cluster(features)
 
         # Score with IQA

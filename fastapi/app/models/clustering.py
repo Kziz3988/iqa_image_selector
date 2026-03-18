@@ -1,6 +1,7 @@
 import hdbscan
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.cluster import AgglomerativeClustering
 
 class BaseClusterer:
     def cluster(self, features, allow_noise=False):
@@ -28,6 +29,16 @@ class HDBSCANClusterer(BaseClusterer):
         return labels
 
 # Use this for small samples
+class AgglomerativeClusterer(BaseClusterer):
+    def __init__(self):
+        self.clusterer = AgglomerativeClustering(n_clusters=None, distance_threshold=0.5, linkage='average')
+
+    def cluster(self, features, allow_noise=False):
+        labels = self.clusterer.fit_predict(np.array(features, copy=True))
+        if not allow_noise: 
+            labels = self.assign_noise(labels)
+        return labels
+
 class CosineClusterer(BaseClusterer):
     def __init__(self, threshold=0.9):
         self.threshold = threshold

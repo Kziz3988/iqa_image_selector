@@ -17,6 +17,10 @@
       </div>
     </div>
 
+    <el-button type="primary" @click="downloadAllBest" style="margin-top: 20px;">
+      下载优选图像
+    </el-button>
+
     <h2 v-if="otherImages.length !== 0">
       剩余图像
     </h2>
@@ -34,6 +38,8 @@
 
 <script setup>
 import { defineProps, computed, inject } from "vue";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 const isProcessing = inject('isProcessing')
 
 const props = defineProps({
@@ -80,6 +86,19 @@ const getImageUrl = (file) => {
   const raw = props.resultData.fileMap[file];
   if (!raw) return "";
   return URL.createObjectURL(raw);
+};
+
+const downloadAllBest = async () => {
+  if (!bestImages.value.length) return;
+  const zip = new JSZip();
+  bestImages.value.forEach((file) => {
+    const blob = props.resultData.fileMap[file];
+    if (blob) {
+      zip.file(file, blob);
+    }
+  });
+  const content = await zip.generateAsync({ type: "blob" });
+  saveAs(content, "best_images.zip");
 };
 </script>
 

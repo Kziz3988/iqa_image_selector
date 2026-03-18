@@ -140,6 +140,19 @@ const connectWS = (task_id) => {
   padding-top: 40px;
 }
 
+.upload-image ::v-deep(.el-upload-list--picture-card) {
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.upload-image ::v-deep(.el-upload-list__item) {
+  float: none !important;
+  margin: 5px;
+}
+
 .actions {
   margin-top: 20px;
 }
