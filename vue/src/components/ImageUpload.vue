@@ -18,6 +18,14 @@
       <el-icon><Plus /></el-icon>
     </el-upload>
 
+    <div class="model-select" v-if="!isProcessing">
+      <span>选择模型：</span>
+      <el-select v-model="selectedModel" style="width: 200px">
+        <el-option label="ARNIQA" value="ARNIQA" />
+        <el-option label="VCRNet" value="VCRNet" />
+      </el-select>
+    </div>
+
     <div class="actions" v-if="!isProcessing">
       <el-button type="danger" v-if="fileList.length > 0" @click="clearImages">
         清空图像
@@ -55,6 +63,7 @@ const emit = defineEmits(["upload-success"])
 const progress = ref("")
 const ws = ref(null)
 const isProcessing = inject('isProcessing')
+const selectedModel = ref("ARNIQA")
 
 const handleChange = (file, files) => {
   fileList.value = files
@@ -96,7 +105,11 @@ const submitUpload = async () => {
       ws.value.onopen = resolve
     })
 
-    const processRes = await axios.get(`${PROCESS_URL}/${task_id}`)
+    const processRes = await axios.get(`${PROCESS_URL}/${task_id}`, {
+      params: {
+        iqa_model: selectedModel.value
+      }
+    })
     const data = processRes.data
     const fileMap = {}
     fileList.value.forEach(f => {
@@ -155,6 +168,14 @@ const connectWS = (task_id) => {
 
 .actions {
   margin-top: 20px;
+}
+
+.model-select {
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
 }
 
 .progress {

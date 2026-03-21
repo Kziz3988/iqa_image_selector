@@ -19,7 +19,8 @@ class HDBSCANClusterer(BaseClusterer):
         self.clusterer = hdbscan.HDBSCAN(
             min_cluster_size=min_cluster_size,
             min_samples=min_samples,
-            cluster_selection_epsilon=cluster_selection_epsilon
+            cluster_selection_epsilon=cluster_selection_epsilon,
+            metric='cosine'
         )
 
     def cluster(self, features, allow_noise=False):
@@ -31,7 +32,12 @@ class HDBSCANClusterer(BaseClusterer):
 # Use this for small samples
 class AgglomerativeClusterer(BaseClusterer):
     def __init__(self):
-        self.clusterer = AgglomerativeClustering(n_clusters=None, distance_threshold=0.5, linkage='average')
+        self.clusterer = AgglomerativeClustering(
+            n_clusters=None,
+            metric='cosine',
+            distance_threshold=0.2,
+            linkage='average'
+        )
 
     def cluster(self, features, allow_noise=False):
         labels = self.clusterer.fit_predict(np.array(features, copy=True))
