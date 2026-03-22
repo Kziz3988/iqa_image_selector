@@ -12,4 +12,6 @@
 
 [VCRNet](https://github.com/NUIST-Videocoding/VCRNet/)
 
-[ARNIQA](https://github.com/miccunifi/ARNIQA)
+[MANIQA](https://github.com/IIGROUP/MANIQA/)
+
+[ARNIQA](https://github.com/miccunifi/ARNIQA/)

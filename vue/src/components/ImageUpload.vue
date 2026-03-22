@@ -22,6 +22,7 @@
       <span>选择模型：</span>
       <el-select v-model="selectedModel" style="width: 200px">
         <el-option label="ARNIQA" value="ARNIQA" />
+        <el-option label="MANIQA" value="MANIQA" />
         <el-option label="VCRNet" value="VCRNet" />
       </el-select>
     </div>

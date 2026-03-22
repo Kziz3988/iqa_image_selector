@@ -2,8 +2,13 @@ import torch
 from PIL import Image
 from torchvision import transforms
 from app.models.VCRNet.IQASolver import demoIQA as VCRNet
+from app.models.MANIQA.maniqa import IQAModule as MANIQA, ImageData
+from app.models.MANIQA.config import Config
+from app.models.MANIQA.utils.inference_process import ToTensor, Normalize
+from tqdm import tqdm
 from app.models.ARNIQA.arniqa import ARNIQA
 from app.models.ARNIQA.utils.utils_data import center_corners_crop
+from app.utils.paths import get_weight_path
 
 class BaseModel:
     def __init__(self):
@@ -30,6 +35,42 @@ class VCRNetPipeline(BaseModel):
         with torch.no_grad():
             score = self.model(img_tensor)
         return float(score.item())
+    
+class MANIQAPipeline(BaseModel):
+    def __init__(self):
+        super().__init__()
+        self.config = Config({
+            "num_crops": 1,
+            "patch_size": 8,
+            "img_size": 224,
+            "embed_dim": 768,
+            "dim_mlp": 768,
+            "num_heads": [4, 4],
+            "window_size": 4,
+            "depths": [2, 2],
+            "num_outputs": 1,
+            "num_tab": 2,
+            "scale": 0.8,
+            "ckpt_path": 'ckpt_koniq10k.pt',
+        })
+        self.model = MANIQA(self.config).to(self.device)
+        model_weights_path = get_weight_path(self.config.ckpt_path)
+        self.model.net.load_state_dict(torch.load(model_weights_path, map_location="cpu", weights_only=False))
+        self.model.eval()
+        self.transform = transforms.Compose([Normalize(0.5, 0.5), ToTensor()])
+
+    def predict(self, img_path):
+        image = ImageData(image_path=img_path, transform=self.transform, num_crops=self.config.num_crops)
+        avg_score = 0
+        for i in tqdm(range(self.config.num_crops)):
+            with torch.no_grad():
+                patch_sample = image.get_patch(i)
+                patch = patch_sample['d_img_org'].to(self.device)
+                patch = patch.unsqueeze(0)
+                score = self.model(patch)
+                avg_score += score
+        avg_score /= self.config.num_crops
+        return avg_score.item()
     
 class ARNIQAPipeline(BaseModel):
     def __init__(self):
@@ -60,6 +101,8 @@ class IQAFactory:
     def get_model(name='VCRNet'):
         if name == 'VCRNet':
             return VCRNetPipeline()
+        elif name == 'MANIQA':
+            return MANIQAPipeline()
         elif name == 'ARNIQA':
             return ARNIQAPipeline()
         else:
