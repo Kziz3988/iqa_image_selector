@@ -22,6 +22,8 @@ class VCRNetPipeline(BaseModel):
         super().__init__()
         
         self.model = VCRNet().to(self.device)
+        weight_path = get_weight_path('vcrnet.pth')
+        self.model.load_state_dict(torch.load(weight_path, map_location=self.device))
         self.model.eval()
         self.transform = transforms.Compose([
             transforms.Resize((224, 224)),

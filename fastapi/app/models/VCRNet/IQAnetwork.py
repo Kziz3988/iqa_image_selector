@@ -365,14 +365,7 @@ class demoIQA(nn.Module):
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.efficient = EfficientNet.from_name('efficientnet-b0')
-        efficient_weight_path = paths.get_weight_path('efficientnet-b0.pth')
-        self.efficient.load_state_dict(torch.load(efficient_weight_path, map_location=self.device))
-        self.efficient.eval()
-
         self.VCR = VCRNet().to(self.device)
-        vcr_weight_path = paths.get_weight_path('vcrnet.pth')
-        self.VCR.load_state_dict(torch.load(vcr_weight_path, map_location=self.device))
-        self.VCR.eval()
 
         self.gap = nn.AdaptiveAvgPool2d((1, 1))
         self.prelu = nn.PReLU()
