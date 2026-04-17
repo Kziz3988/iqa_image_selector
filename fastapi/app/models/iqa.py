@@ -1,6 +1,7 @@
 import torch
 from PIL import Image
 from torchvision import transforms
+from app.models.DBCNN.dbcnn import DBCNN
 from app.models.VCRNet.IQASolver import demoIQA as VCRNet
 from app.models.MANIQA.maniqa import IQAModule as MANIQA, ImageData
 from app.models.MANIQA.config import Config
@@ -15,7 +16,29 @@ class BaseModel:
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   
     def predict(self, img_path):
-        raise NotImplementedError  
+        raise NotImplementedError
+
+class DBCNNPipeline(BaseModel):
+    def __init__(self):
+        super().__init__()
+        
+        self.model = DBCNN(get_weight_path('scnn.pkl')).to(self.device)
+        self.model.load_state_dict(torch.load(get_weight_path('dbcnn.pth'), map_location=self.device))
+        self.model.eval()
+        self.transform = transforms.Compose([
+            transforms.Resize((512, 384)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
+        ])
+
+    def predict(self, img_path):
+        img = Image.open(img_path).convert('RGB')
+        img = self.transform(img)
+        img = torch.unsqueeze(img, dim=0)
+        img = img.to(self.device)
+        with torch.no_grad():
+            score = self.model(img)
+        return float(score.item())
 
 class VCRNetPipeline(BaseModel):
     def __init__(self):
@@ -72,7 +95,7 @@ class MANIQAPipeline(BaseModel):
                 score = self.model(patch)
                 avg_score += score
         avg_score /= self.config.num_crops
-        return avg_score.item()
+        return avg_score.item() * 100
     
 class ARNIQAPipeline(BaseModel):
     def __init__(self):
@@ -96,12 +119,14 @@ class ARNIQAPipeline(BaseModel):
 
         with torch.no_grad():
             score = self.model(img, img_ds)
-        return float(score.mean(0).item())
+        return float(score.mean(0).item()) * 100
 
 class IQAFactory:
     @staticmethod
     def get_model(name='VCRNet'):
-        if name == 'VCRNet':
+        if name == 'DBCNN':
+            return DBCNNPipeline()
+        elif name == 'VCRNet':
             return VCRNetPipeline()
         elif name == 'MANIQA':
             return MANIQAPipeline()

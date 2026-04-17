@@ -1,3 +1,5 @@
 fastapi/app/models/weights/*.pth filter=lfs diff=lfs merge=lfs -text
 fastapi/app/models/weights/*.pt filter=lfs diff=lfs merge=lfs -text
 fastapi/app/models/weights/*.safetensors filter=lfs diff=lfs merge=lfs -text
+fastapi/app/models/weights/*.pkl filter=lfs diff=lfs merge=lfs -text
+fastapi/app/models/weights/*.pickle filter=lfs diff=lfs merge=lfs -text

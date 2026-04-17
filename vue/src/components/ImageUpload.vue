@@ -24,6 +24,7 @@
         <el-option label="ARNIQA" value="ARNIQA" />
         <el-option label="MANIQA" value="MANIQA" />
         <el-option label="VCRNet" value="VCRNet" />
+        <el-option label="DBCNN" value="DBCNN" />
       </el-select>
     </div>
 
