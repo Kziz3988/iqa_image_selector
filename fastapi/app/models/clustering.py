@@ -15,12 +15,13 @@ class BaseClusterer:
         return labels
 
 class HDBSCANClusterer(BaseClusterer):
-    def __init__(self, min_cluster_size=2, min_samples=1, cluster_selection_epsilon=0.1):
+    def __init__(self, min_cluster_size=2):
+        def cosine_distance(u, v):
+            return 1 - np.dot(u, v) / (np.linalg.norm(u) * np.linalg.norm(v))
+        
         self.clusterer = hdbscan.HDBSCAN(
             min_cluster_size=min_cluster_size,
-            min_samples=min_samples,
-            cluster_selection_epsilon=cluster_selection_epsilon,
-            metric='cosine'
+            metric=cosine_distance
         )
 
     def cluster(self, features, allow_noise=False):

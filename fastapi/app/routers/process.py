@@ -35,7 +35,7 @@ async def process_images(task_id: str, iqa_model: str = "ARNIQA"):
             "stage": "cluster",
             "message": "特征聚类..."
         })
-        clusterer = AgglomerativeClusterer() if n_samples < 10 else HDBSCANClusterer()
+        clusterer = AgglomerativeClusterer() if n_samples < 50 else HDBSCANClusterer()
         labels = clusterer.cluster(features)
 
         # Score with IQA
