@@ -46,26 +46,12 @@ class AgglomerativeClusterer(BaseClusterer):
             labels = self.assign_noise(labels)
         return labels
 
-class CosineClusterer(BaseClusterer):
-    def __init__(self, threshold=0.9):
-        self.threshold = threshold
-
-    def cluster(self, features, allow_noise=False):
-        features = np.array(features, copy=True)
-        n_samples = len(features)
-        if n_samples == 0:
-            return np.array([], dtype=int)
-        elif n_samples == 1:
-            return np.array([0], dtype=int)
-        
-        labels = np.full(n_samples, -1, dtype=int)
-        sim = cosine_similarity(features)
-        current_label = 0
-        for i in range(n_samples):
-            if labels[i] == -1:
-                mask = (labels == -1) & (sim[i] >= self.threshold)
-                labels[mask] = current_label
-                current_label += 1
-        if not allow_noise:
-            labels = self.assign_noise(labels)
-        return labels
+class ClustererFactory:
+    @staticmethod
+    def get_model(name='HDBSCAN'):
+        if name == 'HDBSCAN':
+            return HDBSCANClusterer()
+        elif name == 'Agglomerative':
+            return AgglomerativeClusterer()
+        else:
+            raise ValueError(f"Unknown clustering method: {name}")

@@ -25,3 +25,11 @@ class ResNetFeatureExtractor:
         with torch.no_grad():
             features = self.model(x).squeeze().to(self.device).numpy()
         return features / np.linalg.norm(features)
+    
+class ExtractorFactory:
+    @staticmethod
+    def get_model(name='ResNet'):
+        if name == 'ResNet':
+            return ResNetFeatureExtractor()
+        else:
+            raise ValueError(f"Unknown feature extractor: {name}")

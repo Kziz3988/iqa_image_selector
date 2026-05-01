@@ -21,9 +21,9 @@
     <div class="model-select" v-if="!isProcessing">
       <span>选择模型：</span>
       <el-select v-model="selectedModel" style="width: 200px">
+        <el-option label="自动选择" value="Selector" />
         <el-option label="ARNIQA" value="ARNIQA" />
         <el-option label="MANIQA" value="MANIQA" />
-        <el-option label="VCRNet" value="VCRNet" />
         <el-option label="DBCNN" value="DBCNN" />
       </el-select>
     </div>
@@ -65,7 +65,7 @@ const emit = defineEmits(["upload-success"])
 const progress = ref("")
 const ws = ref(null)
 const isProcessing = inject('isProcessing')
-const selectedModel = ref("ARNIQA")
+const selectedModel = ref("Selector")
 
 const handleChange = (file, files) => {
   fileList.value = files

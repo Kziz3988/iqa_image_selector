@@ -2,13 +2,12 @@ import torch
 from PIL import Image
 from torchvision import transforms
 from app.models.DBCNN.dbcnn import DBCNN
-from app.models.VCRNet.IQASolver import demoIQA as VCRNet
 from app.models.MANIQA.maniqa import IQAModule as MANIQA, ImageData
 from app.models.MANIQA.config import Config
 from app.models.MANIQA.utils.inference_process import ToTensor, Normalize
-from tqdm import tqdm
 from app.models.ARNIQA.arniqa import ARNIQA
 from app.models.ARNIQA.utils.utils_data import center_corners_crop
+from app.models.selector import MLP as Selector
 from app.utils.paths import get_weight_path
 
 class BaseModel:
@@ -39,27 +38,6 @@ class DBCNNPipeline(BaseModel):
         with torch.no_grad():
             score = self.model(img)
         return float(score.item())
-
-class VCRNetPipeline(BaseModel):
-    def __init__(self):
-        super().__init__()
-        
-        self.model = VCRNet().to(self.device)
-        weight_path = get_weight_path('vcrnet.pth')
-        self.model.load_state_dict(torch.load(weight_path, map_location=self.device))
-        self.model.eval()
-        self.transform = transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ])
-
-    def predict(self, img_path):
-        img = Image.open(img_path).convert('RGB')
-        img_tensor = self.transform(img).unsqueeze(0).to(self.device)
-        with torch.no_grad():
-            score = self.model(img_tensor)
-        return float(score.item())
     
 class MANIQAPipeline(BaseModel):
     def __init__(self):
@@ -87,7 +65,7 @@ class MANIQAPipeline(BaseModel):
     def predict(self, img_path):
         image = ImageData(image_path=img_path, transform=self.transform, num_crops=self.config.num_crops)
         avg_score = 0
-        for i in tqdm(range(self.config.num_crops)):
+        for i in range(self.config.num_crops):
             with torch.no_grad():
                 patch_sample = image.get_patch(i)
                 patch = patch_sample['d_img_org'].to(self.device)
@@ -120,14 +98,28 @@ class ARNIQAPipeline(BaseModel):
         with torch.no_grad():
             score = self.model(img, img_ds)
         return float(score.mean(0).item()) * 100
+    
+class SelectorPipeline(BaseModel):
+    def __init__(self):
+        super().__init__()
+        self.model = Selector()
+        self.model.load_state_dict(torch.load(get_weight_path('selector.pth'), map_location=self.device)['model'])
+        self.model.eval()
+        self.iqa = None
+    
+    def predict(self, img_path, feature):
+        f = torch.tensor(feature).unsqueeze(0).to(self.device)
+        best_iqa_idx = torch.argmin(self.model(f))
+        best_iqa = self.iqa[best_iqa_idx]
+        return best_iqa.predict(img_path)
 
 class IQAFactory:
     @staticmethod
-    def get_model(name='VCRNet'):
-        if name == 'DBCNN':
+    def get_model(name='Selector'):
+        if name == 'Selector':
+            return SelectorPipeline()
+        elif name == 'DBCNN':
             return DBCNNPipeline()
-        elif name == 'VCRNet':
-            return VCRNetPipeline()
         elif name == 'MANIQA':
             return MANIQAPipeline()
         elif name == 'ARNIQA':
