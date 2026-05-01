@@ -44,25 +44,37 @@ async def process_images(task_id: str, iqa_model: str = "Selector"):
         })
         iqa = ModelService.get_model("iqa", iqa_model)
         if iqa_model == "Selector":
+            scores = []
+            iqa_models = []
             if iqa.iqa == None:
-                iqa.iqa = [
-                    ModelService.get_model("iqa", "DBCNN"),
-                    ModelService.get_model("iqa", "MANIQA"),
-                    ModelService.get_model("iqa", "ARNIQA")
-                ]
-            scores = [iqa.predict(k, v) for k, v in features.items()]
+                iqa.iqa = [ModelService.get_model("iqa", name) for name in iqa.iqa_names]
+            for k, v in features.items():
+                score, iqa_name = iqa.predict(k, v)
+                scores.append(score)
+                iqa_models.append(iqa_name)
         else:
             scores = [iqa.predict(f) for f in file_paths]
+            iqa_models = [iqa_model for f in file_paths]
 
-        # Select all best images
-        cluster_results = {}
-        for file, label, score in zip(files, labels, scores):
+        # Select all best images 
+        file_data = {}
+        for file, label, score, model in zip(files, labels, scores, iqa_models):
             label = int(label)
-            if label not in cluster_results or score > cluster_results[label]["score"]:
-                cluster_results[label] = {
-                    "file": os.path.basename(file),
-                    "score": score
-                }
+            if label not in file_data:
+                file_data[label] = []
+            file_data[label].append({
+                "file": os.path.basename(file),
+                "score": float(score),
+                "model": model
+            })
+        sorted_file_data = []
+        for label in sorted(file_data.keys()):
+            sorted_data = sorted(file_data[label], key=lambda x: x['score'], reverse=True)
+            sorted_file_data.append({
+                "cluster": label,
+                "best_image": sorted_data[0],
+                "other_images": sorted_data[1:]
+            })
 
         # Return the result
         await progress_manager.send(task_id, {
@@ -71,10 +83,7 @@ async def process_images(task_id: str, iqa_model: str = "Selector"):
         })
         result = {
             "task_id": task_id,
-            "all_files": files,
-            "labels": [int(l) for l in labels.tolist()],
-            "scores": [float(s) for s in scores],
-            "best_in_cluster": {str(k): os.path.basename(v["file"]) for k, v in cluster_results.items()}
+            "file_data": sorted_file_data
         }
         return result
 

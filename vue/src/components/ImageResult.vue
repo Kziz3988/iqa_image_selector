@@ -7,11 +7,12 @@
     </div>
 
     <div v-else class="image-grid">
-      <div v-for="(file, index) in bestImages" :key="index" class="image-card">
-        <img :src="getImageUrl(file)" class="image" />
+      <div v-for="(bestImage, index) in bestImages" :key="'best-' + index" class="image-card">
+        <img :src="getImageUrl(bestImage.file)" class="image" />
         <div class="info">
-          <p>聚类: {{ resultData.labels[resultData.all_files.indexOf(file)] }}</p>
-          <p>分数: {{ resultData.scores[resultData.all_files.indexOf(file)].toFixed(3) }}</p>
+          <p>聚类: {{ bestImage.cluster }}</p>
+          <p>分数: {{ bestImage.score.toFixed(3) }}</p>
+          <p>IQA模型: {{ bestImage.model }}</p>
           <el-tag type="success">最优图像</el-tag>
         </div>
       </div>
@@ -25,11 +26,12 @@
       剩余图像
     </h2>
     <div v-if="otherImages.length !== 0" class="image-grid">
-      <div v-for="(file, index) in otherImages" :key="index" class="image-card">
-        <img :src="getImageUrl(file)" class="image" />
+      <div v-for="(otherImage, index) in otherImages" :key="'other-' + index" class="image-card">
+        <img :src="getImageUrl(otherImage.file)" class="image" />
         <div class="info">
-          <p>聚类: {{ resultData.labels[resultData.all_files.indexOf(file)] }}</p>
-          <p>分数: {{ resultData.scores[resultData.all_files.indexOf(file)].toFixed(3) }}</p>
+          <p>聚类: {{ otherImage.cluster }}</p>
+          <p>分数: {{ otherImage.score.toFixed(3) }}</p>
+          <p>IQA模型: {{ otherImage.model }}</p>
         </div>
       </div>
     </div>
@@ -49,37 +51,23 @@ const props = defineProps({
 const bestImages = computed(() => {
   if (!props.resultData) return [];
 
-  const best = Object.values(props.resultData.best_in_cluster);
-  return props.resultData.all_files
-    .filter(file => best.includes(file))
-    .sort((a, b) => {
-      const idxA = props.resultData.all_files.indexOf(a);
-      const idxB = props.resultData.all_files.indexOf(b);
-      const labelA = props.resultData.labels[idxA];
-      const labelB = props.resultData.labels[idxB];
-      if (labelA !== labelB) return labelA - labelB;
-      const scoreA = props.resultData.scores[idxA];
-      const scoreB = props.resultData.scores[idxB];
-      return scoreB - scoreA;
-    });
+  const bestImages = [];
+  props.resultData.file_data.forEach(cluster => {
+    bestImages.push(cluster.best_image);
+  });
+
+  return bestImages;
 });
 
 const otherImages = computed(() => {
   if (!props.resultData) return [];
 
-  const best = Object.values(props.resultData.best_in_cluster);
-  return props.resultData.all_files
-    .filter(file => !best.includes(file))
-    .sort((a, b) => {
-      const idxA = props.resultData.all_files.indexOf(a);
-      const idxB = props.resultData.all_files.indexOf(b);
-      const labelA = props.resultData.labels[idxA];
-      const labelB = props.resultData.labels[idxB];
-      if (labelA !== labelB) return labelA - labelB;
-      const scoreA = props.resultData.scores[idxA];
-      const scoreB = props.resultData.scores[idxB];
-      return scoreB - scoreA;
-    });
+  const allOtherImages = [];
+  props.resultData.file_data.forEach(cluster => {
+    allOtherImages.push(...cluster.other_images);
+  });
+
+  return allOtherImages;
 });
 
 const getImageUrl = (file) => {

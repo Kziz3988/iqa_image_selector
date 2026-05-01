@@ -105,13 +105,14 @@ class SelectorPipeline(BaseModel):
         self.model = Selector()
         self.model.load_state_dict(torch.load(get_weight_path('selector.pth'), map_location=self.device)['model'])
         self.model.eval()
+        self.iqa_names = ['DBCNN', 'MANIQA', 'ARNIQA']
         self.iqa = None
     
     def predict(self, img_path, feature):
         f = torch.tensor(feature).unsqueeze(0).to(self.device)
         best_iqa_idx = torch.argmin(self.model(f))
         best_iqa = self.iqa[best_iqa_idx]
-        return best_iqa.predict(img_path)
+        return best_iqa.predict(img_path), self.iqa_names[best_iqa_idx]
 
 class IQAFactory:
     @staticmethod
