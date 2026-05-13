@@ -47,6 +47,7 @@
       </el-icon>
       <span class="progress-text">{{ progress }}</span>
       <el-progress
+        v-if="progressPercent !== null"
         :percentage="progressPercent"
         stroke-width="10"
         :text-inside="false"
@@ -69,10 +70,10 @@ const UPLOAD_URL = "http://localhost:8000/upload"
 const PROCESS_URL = "http://localhost:8000/process"
 const emit = defineEmits(["upload-success"])
 const progress = ref("")
+const progressPercent = ref(null)
 const ws = ref(null)
 const isProcessing = inject('isProcessing')
 const selectedModel = ref("Selector")
-const progressPercent = ref(0)
 
 const handleChange = (file, files) => {
   fileList.value = files
@@ -150,6 +151,7 @@ const connectWS = (task_id) => {
       progressPercent.value = Math.round(data.progress * 100) // 0~100
       progress.value = `${data.message} (${progressPercent.value}%)`
     } else {
+      progressPercent.value = null
       progress.value = data.message
     }
   }
