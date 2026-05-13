@@ -149,7 +149,7 @@ const connectWS = (task_id) => {
     const data = JSON.parse(event.data)
     if (data.progress !== undefined) {
       progressPercent.value = Math.round(data.progress * 100) // 0~100
-      progress.value = `${data.message} (${progressPercent.value}%)`
+      progress.value = data.message
     } else {
       progressPercent.value = null
       progress.value = data.message
