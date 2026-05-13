@@ -46,6 +46,12 @@
         <Loading />
       </el-icon>
       <span class="progress-text">{{ progress }}</span>
+      <el-progress
+        :percentage="progressPercent"
+        stroke-width="10"
+        :text-inside="false"
+        style="width: 80%; margin-top: 10px;"
+      ></el-progress>
     </div>
   </div>
 </template>
@@ -66,6 +72,7 @@ const progress = ref("")
 const ws = ref(null)
 const isProcessing = inject('isProcessing')
 const selectedModel = ref("Selector")
+const progressPercent = ref(0)
 
 const handleChange = (file, files) => {
   fileList.value = files
@@ -139,7 +146,12 @@ const connectWS = (task_id) => {
   ws.value = new WebSocket(`ws://localhost:8000/ws/${task_id}`)
   ws.value.onmessage = (event) => {
     const data = JSON.parse(event.data)
-    progress.value = data.message
+    if (data.progress !== undefined) {
+      progressPercent.value = Math.round(data.progress * 100) // 0~100
+      progress.value = `${data.message} (${progressPercent.value}%)`
+    } else {
+      progress.value = data.message
+    }
   }
 
   ws.value.onclose = () => {

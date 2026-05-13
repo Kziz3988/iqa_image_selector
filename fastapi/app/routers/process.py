@@ -21,12 +21,16 @@ async def process_images(task_id: str, iqa_model: str = "Selector"):
 
     try:
         # Extract features
-        await progress_manager.send(task_id, {
-            "stage": "feature",
-            "message": "提取特征..."
-        })
         extractor = ModelService.get_model("extractor", "ResNet")
-        features = {f: extractor.extract(f) for f in file_paths}
+        features = {}
+        n_files = len(file_paths)
+        for idx, fpath in enumerate(file_paths, 1):
+            features[fpath] = extractor.extract(fpath)
+            await progress_manager.send(task_id, {
+                "stage": "feature",
+                "message": f"提取特征...({idx}/{n_files})",
+                "progress": idx / n_files
+            })
         n_samples = len(features)
 
         # Cluster features
@@ -38,23 +42,31 @@ async def process_images(task_id: str, iqa_model: str = "Selector"):
         labels = clusterer.cluster(list(features.values()))
 
         # Score with IQA
-        await progress_manager.send(task_id, {
-            "stage": "iqa",
-            "message": "图像质量评分..."
-        })
+        scores = []
+        iqa_models = []
+
         iqa = ModelService.get_model("iqa", iqa_model)
+        if iqa_model == "Selector" and iqa.iqa is None:
+            iqa.iqa = [ModelService.get_model("iqa", name) for name in iqa.iqa_names]
         if iqa_model == "Selector":
-            scores = []
-            iqa_models = []
-            if iqa.iqa == None:
-                iqa.iqa = [ModelService.get_model("iqa", name) for name in iqa.iqa_names]
-            for k, v in features.items():
-                score, iqa_name = iqa.predict(k, v)
-                scores.append(score)
-                iqa_models.append(iqa_name)
+            iterator = features.items()
         else:
-            scores = [iqa.predict(f) for f in file_paths]
-            iqa_models = [iqa_model for f in file_paths]
+            iterator = file_paths
+        for idx, item in enumerate(iterator, 1):
+            if iqa_model == "Selector":
+                k, v = item
+                score, model_name = iqa.predict(k, v)
+            else:
+                fpath = item
+                score = iqa.predict(fpath)
+                model_name = iqa_model
+            scores.append(score)
+            iqa_models.append(model_name)
+            await progress_manager.send(task_id, {
+                "stage": "iqa",
+                "message": f"图像质量评分...({idx}/{n_files})",
+                "progress": idx / n_files
+            })
 
         # Select all best images 
         file_data = {}
