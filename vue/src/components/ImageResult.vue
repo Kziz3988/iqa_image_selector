@@ -53,7 +53,9 @@ const bestImages = computed(() => {
 
   const bestImages = [];
   props.resultData.file_data.forEach(cluster => {
-    bestImages.push(cluster.best_image);
+    const img = cluster.best_image;
+    img.cluster = cluster.cluster;
+    bestImages.push(img);
   });
 
   return bestImages;
@@ -64,7 +66,10 @@ const otherImages = computed(() => {
 
   const allOtherImages = [];
   props.resultData.file_data.forEach(cluster => {
-    allOtherImages.push(...cluster.other_images);
+    cluster.other_images.forEach(img => {
+      img.cluster = cluster.cluster;
+      allOtherImages.push(img);
+    });
   });
 
   return allOtherImages;

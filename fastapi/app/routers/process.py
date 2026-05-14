@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+import numpy as np
 from app.utils.task import get_task_dir, delete_task
 from app.utils.progress import progress_manager
 from app.services.model_service import ModelService
@@ -31,14 +32,13 @@ async def process_images(task_id: str, iqa_model: str = "Selector"):
                 "message": f"提取特征...({idx}/{n_files})",
                 "progress": idx / n_files
             })
-        n_samples = len(features)
 
         # Cluster features
         await progress_manager.send(task_id, {
             "stage": "cluster",
             "message": "特征聚类..."
         })
-        clusterer = ModelService.get_model("clusterer", "Agglomerative") if n_samples < 50 else ModelService.get_model("clusterer", "HDBSCAN")
+        clusterer = ModelService.get_model("clusterer", "Agglomerative") if n_files < 50 else ModelService.get_model("clusterer", "HDBSCAN")
         labels = clusterer.cluster(list(features.values()))
 
         # Score with IQA
@@ -49,6 +49,11 @@ async def process_images(task_id: str, iqa_model: str = "Selector"):
         if iqa_model == "Selector" and iqa.iqa is None:
             iqa.iqa = [ModelService.get_model("iqa", name) for name in iqa.iqa_names]
         if iqa_model == "Selector":
+            all_features = np.array(list(features.values()))
+            feat_mean = all_features.mean(axis=0)
+            feat_std = all_features.std(axis=0) + 1e-8
+            for fpath in features:
+                features[fpath] = (features[fpath] - feat_mean) / feat_std
             iterator = features.items()
         else:
             iterator = file_paths

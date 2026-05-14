@@ -110,7 +110,9 @@ class SelectorPipeline(BaseModel):
     
     def predict(self, img_path, feature):
         f = torch.tensor(feature).unsqueeze(0).to(self.device)
-        best_iqa_idx = torch.argmin(self.model(f))
+        pred = self.model(f)
+        print(pred)
+        best_iqa_idx = torch.argmin(pred)
         best_iqa = self.iqa[best_iqa_idx]
         return best_iqa.predict(img_path), self.iqa_names[best_iqa_idx]
 
