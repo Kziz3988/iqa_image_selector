@@ -1,6 +1,27 @@
 <template>
   <div class="upload-page">
-    <h2>请上传待优选的图像集</h2>
+    <div class="upload-header">
+      <h2>请上传待优选的图像集</h2>
+
+      <div class="model-select" v-if="!isProcessing">
+        <span>选择模型：</span>
+        <el-select v-model="selectedModel" style="width: 200px">
+          <el-option label="自动选择" value="Selector" />
+          <el-option label="ARNIQA" value="ARNIQA" />
+          <el-option label="MANIQA" value="MANIQA" />
+          <el-option label="DBCNN" value="DBCNN" />
+        </el-select>
+      </div>
+
+      <div class="actions" v-if="!isProcessing">
+        <el-button type="danger" v-if="fileList.length > 0" @click="clearImages">
+          清空图像
+        </el-button>
+        <el-button type="primary" @click="submitUpload">
+          上传图像
+        </el-button>
+      </div>
+    </div>
 
     <el-upload
       class="upload-image"
@@ -17,25 +38,6 @@
     >
       <el-icon><Plus /></el-icon>
     </el-upload>
-
-    <div class="model-select" v-if="!isProcessing">
-      <span>选择模型：</span>
-      <el-select v-model="selectedModel" style="width: 200px">
-        <el-option label="自动选择" value="Selector" />
-        <el-option label="ARNIQA" value="ARNIQA" />
-        <el-option label="MANIQA" value="MANIQA" />
-        <el-option label="DBCNN" value="DBCNN" />
-      </el-select>
-    </div>
-
-    <div class="actions" v-if="!isProcessing">
-      <el-button type="danger" v-if="fileList.length > 0" @click="clearImages">
-        清空图像
-      </el-button>
-      <el-button type="primary" @click="submitUpload">
-        上传图像
-      </el-button>
-    </div>
 
     <el-dialog v-model="dialogVisible">
       <img :src="dialogImageUrl" style="width:100%" />
@@ -164,9 +166,30 @@ const connectWS = (task_id) => {
 
 <style scoped>
 .upload-page {
-  width: 600px;
-  margin: auto;
-  padding-top: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 20px;
+}
+
+.upload-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.upload-header h2 {
+  margin: 0;
+}
+
+.model-select {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .upload-image ::v-deep(.el-upload-list--picture-card) {
@@ -177,20 +200,8 @@ const connectWS = (task_id) => {
   list-style: none;
 }
 
-.upload-image ::v-deep(.el-upload-list__item) {
-  float: none !important;
-  margin: 5px;
-}
-
 .actions {
-  margin-top: 20px;
-}
-
-.model-select {
-  margin: 20px 0;
   display: flex;
-  justify-content: center;
-  align-items: center;
   gap: 10px;
 }
 

@@ -1,6 +1,11 @@
-<template>
+<template> 
   <div v-if="!isProcessing" class="result-page">
-    <h2>图像优选结果</h2>
+    <div class="result-header">
+      <h2>图像优选结果</h2>
+      <el-button type="primary" @click="downloadAllBest" v-if="bestImages.length">
+        下载优选图像
+      </el-button>
+    </div>
 
     <div v-if="bestImages.length === 0">
       暂无最优结果
@@ -17,10 +22,6 @@
         </div>
       </div>
     </div>
-
-    <el-button type="primary" @click="downloadAllBest" style="margin-top: 20px;">
-      下载优选图像
-    </el-button>
 
     <h2 v-if="otherImages.length !== 0">
       剩余图像
@@ -101,6 +102,18 @@ const downloadAllBest = async () => {
   margin: 0 auto;
   padding: 40px auto;
   text-align: center;
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.result-header h2 {
+  margin: 0;
 }
 
 .image-grid {
