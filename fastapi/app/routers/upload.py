@@ -8,8 +8,8 @@ import os
 
 router = APIRouter()
 os.makedirs(UPLOAD_DIR, exist_ok=True)
-@router.post(UPLOAD_ROUTE)
 
+@router.post(UPLOAD_ROUTE)
 async def upload_files(files: List[UploadFile] = File(...)):
     task_id, task_dir = create_task()
     saved_files = []
@@ -19,11 +19,12 @@ async def upload_files(files: List[UploadFile] = File(...)):
     })
 
     for file in files:
-        path = os.path.join(task_dir, file.filename)
+        filename = file.filename
+        path = os.path.join(task_dir, filename)
         contents = await file.read()
         with open(path, "wb") as f:
             f.write(contents)
-        saved_files.append(file.filename)
+        saved_files.append(filename)
 
     return JSONResponse({
         "task_id": task_id,
